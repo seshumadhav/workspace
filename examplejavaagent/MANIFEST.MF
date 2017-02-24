@@ -1,0 +1,6 @@
+Manifest-Version: 1.0
+Built-By: seshu
+Created-By: Apache Maven 3.3.9
+Build-Jdk: 1.8.0_112
+Premain-Class: com.examplejavaagent.printer.SimpleAgent
+Agent-Class: target/classes/com/examplejavaagent/printer/SimpleAgent.class
