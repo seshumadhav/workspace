@@ -8,6 +8,7 @@ $ mvn clean package
 $ java -jar target/javaagent-app-0.0.1-SNAPSHOT-jar-with-dependencies.jar
 
 Content size: 10477
+
 Content size: 290
 
 #### Now attach agent to the app
