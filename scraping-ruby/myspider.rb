@@ -2,7 +2,9 @@ require 'rubygems'
 require 'nokogiri'
 require 'open-uri'
 
-root_url = "http://code.tutsplus.com/"
+root_url = "http://central.maven.org/maven2/"
+$TERMINAL_EXTENSIONS = ['pom', 'xml', 'jar', 'sha1', 'md5']
+$NON_PROCEEDABLE_DIRS = ['Parent Directory', '..']
 
 def get_current_url(path)
 	return (path.end_with? '/') ? path : path + '/'
@@ -25,12 +27,12 @@ def is_valid_node(url)
 end	
 
 def need_not_proceed(href, text) 
-	return href.to_s.empty? || (text.to_s.empty? || text == "Parent Directory")
+	return href.to_s.empty? || (text.to_s.empty? || $NON_PROCEEDABLE_DIRS.include? (text))
 end
 
 
 def url_ends_with_jar_or_xml_sha1(link)
-	['jar','xml','sha1'].any? { |extn| link.end_with?(extn) }
+	$TERMINAL_EXTENSIONS.any? { |extn| link.end_with?(extn) }
 end	
 
 def append(url1, url2)
