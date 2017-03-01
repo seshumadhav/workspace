@@ -5,9 +5,12 @@ require 'nokogiri'
 require 'open-uri'
 
 root_url = "http://central.maven.org/maven2/"
+
 $JAR_EXTENSIONS = ['jar', 'sha1', 'md5']
 $TERMINAL_EXTENSIONS = ['pom', 'xml'] + $JAR_EXTENSIONS
 $NON_PROCEEDABLE_DIRS = ['Parent Directory', '..']
+$THRESHOLD = 100
+$RESPECT_THRESHOLD = false
 
 def get_current_url(path)
 	return (path.end_with? '/') ? path : path + '/'
@@ -52,6 +55,12 @@ def is_relative_link(href)
 	href.end_with? ('/')
 end
 
+def get_time_as_mins_and_secs(seconds)
+	mins = (seconds/60).to_i
+	secs = (seconds -  (mins * 60)).round
+	return "#{seconds} seconds => #{mins}m,#{secs}s"
+end	
+
 root_node = {
 	:name => "root",
 	:direct_link => root_url,
@@ -66,7 +75,7 @@ $urls[root_url] = root_node
 
 def scrape(url)
 	# Forced line to cut very deep recursion so that we can test POC
-	return if ($urls.size > 10000)
+	return if $RESPECT_THRESHOLD && $urls.size > $THRESHOLD
 
 	node = $urls[url]
 
@@ -131,9 +140,21 @@ def scrape(url)
 	end
 end
 
+t1 = Time.now
 scrape(root_url)
 puts "\n\nList of all libraries found: \n"
+deps = {}
+index = 1
 $urls.each do |direct_url, node|
-	puts "#{node[:canonical_name]}" if node[:is_a_dependency]
+	if node[:is_a_dependency] && node[:direct_link].end_with?('.jar')
+		deps[direct_url] = node
+		puts "#{index}. #{node[:canonical_name]}"
+		index += 1
+	end
 end
+t2 = Time.now
+elapsed_seconds = t2 - t1
+time_taken = get_time_as_mins_and_secs(elapsed_seconds)
 
+puts "\n\nTotal dependencies fetched: #{deps.size}"
+puts "Time taken: #{time_taken}"
