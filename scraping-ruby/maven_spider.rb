@@ -3,7 +3,8 @@ require 'nokogiri'
 require 'open-uri'
 
 root_url = "http://central.maven.org/maven2/"
-$TERMINAL_EXTENSIONS = ['pom', 'xml', 'jar', 'sha1', 'md5']
+$JAR_EXTENSIONS = ['jar', 'sha1', 'md5']
+$TERMINAL_EXTENSIONS = ['pom', 'xml'] + $JAR_EXTENSIONS
 $NON_PROCEEDABLE_DIRS = ['Parent Directory', '..']
 
 def get_current_url(path)
@@ -31,9 +32,13 @@ def need_not_proceed(href, text)
 end
 
 
-def url_ends_with_jar_or_xml_sha1(link)
+def terminal_link(link)
 	$TERMINAL_EXTENSIONS.any? { |extn| link.end_with?(extn) }
-end	
+end
+
+def is_jar_link(link)
+	$JAR_EXTENSIONS.any? { |extn| link.end_with?(extn) }
+end
 
 def append(url1, url2)
 	url1 = (url1 + "/") unless url1.end_with?("/")
@@ -50,24 +55,29 @@ root_node = {
 	:direct_link => root_url,
 	:canonical_name => "root",
 	:parent_url => "",
-	:processed => false
+	:processed => false,
+	:is_a_dependency => false
 }
 
 $urls = {}
 $urls[root_url] = root_node
 
 def scrape(url)
+	# Forced line to cut very deep recursion so that we can test POC
+	return if ($urls.size > 1000)
+
 	node = $urls[url]
 
 	# If page already scraped, abort scraping that page and return
 	if node[:processed]
-		puts "Scraping aborted for #{url}. REASON: Already scraped"
+		puts "Scraping aborted for #{url}; REASON: Already scraped"
 	end	
 	
 	# If one of the terminal links like XML, JAR, SHA1, mark the node processed and return; No scraping required
-	if url_ends_with_jar_or_xml_sha1(url)
+	if terminal_link(url)
 		node[:processed] = true
-		puts "Scraping aborted for #{url}. REASON: Terminal Link encountered."
+		node[:is_a_dependency] = true if is_jar_link(url)
+		puts "Scraping aborted for #{url}; REASON: Terminal Link encountered."
 		return
 	end	
 
@@ -78,14 +88,14 @@ def scrape(url)
 	begin
 		pageobj = get_page_content_as_nokogiri_obj(url)
 	rescue => ex
-		puts "Scraping aborted for #{url}. REASON: Exception #{ex} while opening."
+		puts "Scraping aborted for #{url}; REASON: Exception #{ex} while opening."
 		return
 	end	
 
-	# Extract all anchor tags. If not anchor tags, abort scraping and return.
+	# Extract all anchor tags. If no anchor tags, abort scraping and return.
 	atags = pageobj.css('a')
 	if atags.to_a.empty?
-		puts "Scraping aborted for #{url}. REASON: No anchor tags found"
+		puts "Scraping aborted for #{url}; REASON: No anchor tags found"
 		return 
 	end
 
@@ -113,7 +123,7 @@ def scrape(url)
 		# if the urls map already contains this node's direct link, skip initiating a call to that URL.
 		if !$urls.has_key?(direct_link_to_this_node)
 			$urls[direct_link_to_this_node] = child_node	
-			puts "\nChasing #{direct_link_to_this_node}"
+			# puts "\nChasing #{direct_link_to_this_node}"
 			scrape(direct_link_to_this_node)
 		end
 	end
@@ -121,6 +131,6 @@ end
 
 scrape(root_url)
 puts "\n\nList of all libraries found: \n"
-$urls.each do |direct_url, url|
-	puts "#{url[:canonical_name]}"
+$urls.each do |direct_url, node|
+	puts "#{node[:canonical_name]}" if node[:is_a_dependency]
 end
