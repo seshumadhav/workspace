@@ -66,7 +66,7 @@ $urls[root_url] = root_node
 
 def scrape(url)
 	# Forced line to cut very deep recursion so that we can test POC
-	return if ($urls.size > 1000)
+	return if ($urls.size > 10000)
 
 	node = $urls[url]
 
@@ -136,3 +136,4 @@ puts "\n\nList of all libraries found: \n"
 $urls.each do |direct_url, node|
 	puts "#{node[:canonical_name]}" if node[:is_a_dependency]
 end
+
