@@ -8,7 +8,8 @@
 * Printing only libraries 
 
 ### NEXT
-MVP
+
+#### MVP
 * Add instrumentation meta-data to output like (num_deps_found, time_taken_in_mins etc.,)
 * Save dependencies found into a text file (test it on 1K limit)
 * Remove 10K limit and scrape full
@@ -17,10 +18,10 @@ MVP
 * Implement 3 end points (1) Big search box with auto-suggest and show filtered deps (2) View all
 * Setup cronjob to run every 15 mins and update the data
 
-### V1
+#### V1
 * Move backend database into mongodb
 * Setup elastic search
 
-### V2
+#### V2
 * Use react/redux or angular on FE
 * Move backend to nodejs
