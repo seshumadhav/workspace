@@ -1,3 +1,5 @@
+# Read README.md first
+
 require 'rubygems'
 require 'nokogiri'
 require 'open-uri'
